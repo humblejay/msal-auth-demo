@@ -123,12 +123,17 @@ const response = await fetch('https://graph.microsoft.com/v1.0/me', {
 
 ### Build Commands
 ```bash
+# Option 1: Use the automated build script (Recommended)
+build-webview2-extension.bat
+
+# Option 2: Manual build steps
 # Build WebView2 Extension DLL
 msbuild WebView2Extension\WebView2Extension.csproj -p:Configuration=Debug
 
-# Copy extension to main app directory
+# Copy extension and dependencies to main app directory
 copy "WebView2Extension\bin\Debug\WebView2Extension.dll" "bin\Debug\"
 copy "WebView2Extension\bin\Debug\Microsoft.Web.WebView2.*.dll" "bin\Debug\"
+copy "packages\Microsoft.Web.WebView2.1.0.2210.55\runtimes\win-x64\native\WebView2Loader.dll" "bin\Debug\"
 
 # Build main application
 msbuild MSALAuthApp.csproj -p:Configuration=Debug
@@ -156,6 +161,7 @@ msbuild MSALAuthApp.csproj -p:Configuration=Debug
 **Extension DLL Not Found**
 - Ensure WebView2Extension.dll is in the same directory as MSALAuthApp.exe
 - Check that all WebView2 dependencies are copied
+- Verify WebView2Loader.dll is present in the output directory
 
 **WebView2 Runtime Missing**
 - Install Microsoft Edge WebView2 Runtime
