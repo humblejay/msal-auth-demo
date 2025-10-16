@@ -127,7 +127,7 @@ namespace WebView2Extension
             html.AppendLine("    <div class='container'>");
             html.AppendLine("        <div class='header'>");
             html.AppendLine("            <h1>🔐 WebView2 Token Extension</h1>");
-            html.AppendLine("            <p>MSAL Token Available - Ready for API Calls</p>");
+            html.AppendLine("            <p>MSAL Token Retrieved from Cache - Ready for API Calls</p>");
             html.AppendLine("        </div>");
             
             html.AppendLine("        <div class='info-section'>");
@@ -147,7 +147,7 @@ namespace WebView2Extension
 
             html.AppendLine("        <div class='api-section'>");
             html.AppendLine("            <h3>🚀 API Demo - Token Ready for Use</h3>");
-            html.AppendLine("            <p>The access token is available in JavaScript as <code>window.msalToken</code> and can be used to call APIs without re-authentication.</p>");
+            html.AppendLine("            <p>The access token was autonomously retrieved from MSAL cache and is available in JavaScript as <code>window.msalToken</code> for API calls without re-authentication.</p>");
             html.AppendLine("            <button class='btn' onclick='testTokenAvailability()'>Test Token Availability</button>");
             html.AppendLine("            <button class='btn btn-success' onclick='callMicrosoftGraphAPI()'>Call Microsoft Graph API</button>");
             html.AppendLine("            <button class='btn' onclick='copyTokenToClipboard()'>Copy Token to Clipboard</button>");

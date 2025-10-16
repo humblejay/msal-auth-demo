@@ -81,7 +81,6 @@ namespace MSALAuthApp
                 _currentTokenExpiry = result.ExpiresOn;
                 
                 if (btnLogout != null) btnLogout.Enabled = true;
-                if (btnWebViewExtension != null) btnWebViewExtension.Enabled = true;
                 MessageBox.Show("Login successful!", "Success", 
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
@@ -130,7 +129,6 @@ namespace MSALAuthApp
 
                 if (txtToken != null) txtToken.Text = "Logged out successfully.";
                 if (btnLogout != null) btnLogout.Enabled = false;
-                if (btnWebViewExtension != null) btnWebViewExtension.Enabled = false;
                 
                 // Clear stored token details
                 _currentAccessToken = null;
@@ -159,13 +157,6 @@ namespace MSALAuthApp
         {
             try
             {
-                if (string.IsNullOrEmpty(_currentAccessToken))
-                {
-                    MessageBox.Show("No access token available. Please login first.", "Token Required", 
-                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
-                }
-
                 // Load the WebView2 extension DLL
                 string extensionPath = Path.Combine(Application.StartupPath, "WebView2Extension.dll");
                 
@@ -176,7 +167,7 @@ namespace MSALAuthApp
                     return;
                 }
 
-                // Load and call the extension
+                // Load and call the autonomous extension
                 Assembly extensionAssembly = Assembly.LoadFrom(extensionPath);
                 Type extensionType = extensionAssembly.GetType("WebView2Extension.WebViewExtension");
                 
@@ -185,13 +176,8 @@ namespace MSALAuthApp
                     MethodInfo showMethod = extensionType.GetMethod("ShowTokenWebView");
                     if (showMethod != null)
                     {
-                        // Call the extension with current token data
-                        showMethod.Invoke(null, new object[] 
-                        {
-                            _currentAccessToken,
-                            _currentUserName ?? "Unknown User",
-                            _currentTokenExpiry.ToString("yyyy-MM-dd HH:mm:ss zzz")
-                        });
+                        // Call the extension without parameters - it will read token from MSAL cache
+                        showMethod.Invoke(null, null);
                     }
                     else
                     {

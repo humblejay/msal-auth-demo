@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 
 namespace WebView2Extension
 {
@@ -7,17 +8,33 @@ namespace WebView2Extension
     /// </summary>
     public static class WebViewExtension
     {
+        // Azure AD app registration details (must match main app)
+        private const string ClientId = "b08336ab-2b1a-48ab-b583-c49161fc6055";
+        private const string TenantId = "bd80183f-c644-44a3-aa23-fd0979b821db";
+        private const string Authority = "https://login.microsoftonline.com/" + TenantId;
+        
         /// <summary>
-        /// Shows a WebView2 window with the provided access token
+        /// Shows a WebView2 window with autonomous token retrieval from MSAL cache
         /// </summary>
-        /// <param name="accessToken">The JWT access token from MSAL</param>
-        /// <param name="userName">The authenticated user name</param>
-        /// <param name="tokenExpiry">Token expiration time</param>
-        public static void ShowTokenWebView(string accessToken, string userName, string tokenExpiry)
+        public static async void ShowTokenWebView()
         {
             try
             {
-                var webViewForm = new TokenWebView(accessToken, userName, tokenExpiry);
+                // Read token from MSAL cache silently
+                var cacheReader = new MSALTokenCacheReader(ClientId, Authority);
+                var tokenInfo = await cacheReader.GetTokenInfoAsync();
+                
+                if (tokenInfo == null || !tokenInfo.IsValid)
+                {
+                    System.Windows.Forms.MessageBox.Show(
+                        "No cached token available. Please login in the host application first.",
+                        "Token Not Found",
+                        System.Windows.Forms.MessageBoxButtons.OK,
+                        System.Windows.Forms.MessageBoxIcon.Warning);
+                    return;
+                }
+
+                var webViewForm = new TokenWebView(tokenInfo.AccessToken, tokenInfo.UserName, tokenInfo.TokenExpiryString);
                 webViewForm.Show();
             }
             catch (Exception ex)
@@ -36,7 +53,7 @@ namespace WebView2Extension
         /// <returns>Extension version</returns>
         public static string GetVersion()
         {
-            return "1.0.0";
+            return "1.1.0";
         }
 
         /// <summary>

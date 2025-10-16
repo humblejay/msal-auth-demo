@@ -77,7 +77,7 @@ namespace MSALAuthApp
             // 
             // btnWebViewExtension
             // 
-            this.btnWebViewExtension.Enabled = false;
+            this.btnWebViewExtension.Enabled = true;
             this.btnWebViewExtension.Location = new System.Drawing.Point(358, 45);
             this.btnWebViewExtension.Name = "btnWebViewExtension";
             this.btnWebViewExtension.Size = new System.Drawing.Size(120, 35);
@@ -97,7 +97,7 @@ namespace MSALAuthApp
             this.txtToken.ScrollBars = System.Windows.Forms.ScrollBars.Both;
             this.txtToken.Size = new System.Drawing.Size(756, 347);
             this.txtToken.TabIndex = 4;
-            this.txtToken.Text = "Click Login to authenticate with Azure AD and view the access token here.\r\n\r\nAfter authentication, use 'WebView2 Ext' to load the extension for API calls.";
+            this.txtToken.Text = "Click Login to authenticate with Azure AD and view the access token here.\r\n\r\nThe 'WebView2 Ext' button will automatically find and use cached tokens without requiring explicit token passing.";
             
             // 
             // MainForm
