@@ -40,6 +40,7 @@ namespace MSALAuthApp
                     .Create(ClientId)
                     .WithAuthority("https://login.microsoftonline.com/" + TenantId)
                     .WithRedirectUri("http://localhost") // This will use system browser
+                    .WithCacheOptions(CacheOptions.EnableSharedCacheOptions)
                     .Build();
             }
             catch (Exception ex)

@@ -28,6 +28,7 @@ namespace WebView2Extension
                     .Create(_clientId)
                     .WithAuthority(_authority)
                     .WithRedirectUri("http://localhost")
+                    .WithCacheOptions(CacheOptions.EnableSharedCacheOptions)
                     .Build();
                 
                 // Try to get token silently from cache
