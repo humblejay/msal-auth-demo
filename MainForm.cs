@@ -198,5 +198,57 @@ namespace MSALAuthApp
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+        
+        private async void btnTestCacheDiscovery_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // Load the WebView2 extension DLL and test cache discovery
+                string extensionPath = Path.Combine(Application.StartupPath, "WebView2Extension.dll");
+                
+                if (!File.Exists(extensionPath))
+                {
+                    MessageBox.Show("WebView2Extension.dll not found. Please ensure the extension is built and available.", 
+                        "Extension Not Found", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                // Load and call the cache discovery test
+                Assembly extensionAssembly = Assembly.LoadFrom(extensionPath);
+                Type testType = extensionAssembly.GetType("WebView2Extension.CacheDiscoveryTest");
+                
+                if (testType != null)
+                {
+                    MethodInfo testMethod = testType.GetMethod("RunCacheDiscoveryTest");
+                    if (testMethod != null)
+                    {
+                        if (txtToken != null) txtToken.Text = "Running cache discovery test...";
+                        
+                        var task = (Task<string>)testMethod.Invoke(null, null);
+                        var result = await task;
+                        
+                        if (txtToken != null) txtToken.Text = result;
+                        
+                        MessageBox.Show("Cache discovery test completed. Check the main text area for detailed results.", 
+                            "Test Completed", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    else
+                    {
+                        MessageBox.Show("RunCacheDiscoveryTest method not found in extension.", "Test Error", 
+                            MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("CacheDiscoveryTest class not found in extension.", "Test Error", 
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error running cache discovery test: " + ex.Message, "Test Error", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
     }
 }

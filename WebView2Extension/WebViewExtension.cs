@@ -20,15 +20,26 @@ namespace WebView2Extension
         {
             try
             {
-                // Read token from MSAL cache silently
+                // Read token from MSAL cache silently with enhanced discovery
                 var cacheReader = new MSALTokenCacheReader(ClientId, Authority);
+                
+                // First, discover available caches
+                var discoveredCaches = await cacheReader.DiscoverAvailableCaches();
+                System.Diagnostics.Debug.WriteLine($"Cache Discovery: Found {discoveredCaches.Count} potential cache locations");
+                
                 var tokenInfo = await cacheReader.GetTokenInfoAsync();
                 
                 if (tokenInfo == null || !tokenInfo.IsValid)
                 {
+                    var cacheInfo = string.Join("\n", discoveredCaches.Take(5)); // Show first 5
+                    var message = $"No cached token available. Please login in the host application first.\n\n" +
+                                $"Cache Discovery Results:\n{cacheInfo}\n\n" +
+                                $"Found {discoveredCaches.Count} potential cache locations.\n" +
+                                $"Check Debug Output for detailed discovery logs.";
+                    
                     System.Windows.Forms.MessageBox.Show(
-                        "No cached token available. Please login in the host application first.",
-                        "Token Not Found",
+                        message,
+                        "Token Not Found - Cache Discovery Results",
                         System.Windows.Forms.MessageBoxButtons.OK,
                         System.Windows.Forms.MessageBoxIcon.Warning);
                     return;
