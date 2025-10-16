@@ -1,0 +1,3 @@
+@echo off
+echo Starting MSAL Authentication Demo...
+start "" "bin\Debug\MSALAuthApp.exe"
