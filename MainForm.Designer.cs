@@ -6,6 +6,7 @@ namespace MSALAuthApp
         private System.Windows.Forms.Button btnLogin;
         private System.Windows.Forms.Button btnLogout;
         private System.Windows.Forms.Button btnClear;
+        private System.Windows.Forms.Button btnWebViewExtension;
         private System.Windows.Forms.TextBox txtToken;
         private System.Windows.Forms.Label lblTitle;
 
@@ -23,6 +24,7 @@ namespace MSALAuthApp
             this.btnLogin = new System.Windows.Forms.Button();
             this.btnLogout = new System.Windows.Forms.Button();
             this.btnClear = new System.Windows.Forms.Button();
+            this.btnWebViewExtension = new System.Windows.Forms.Button();
             this.txtToken = new System.Windows.Forms.TextBox();
             this.lblTitle = new System.Windows.Forms.Label();
             this.SuspendLayout();
@@ -73,6 +75,18 @@ namespace MSALAuthApp
             this.btnClear.Click += new System.EventHandler(this.btnClear_Click);
             
             // 
+            // btnWebViewExtension
+            // 
+            this.btnWebViewExtension.Enabled = false;
+            this.btnWebViewExtension.Location = new System.Drawing.Point(358, 45);
+            this.btnWebViewExtension.Name = "btnWebViewExtension";
+            this.btnWebViewExtension.Size = new System.Drawing.Size(120, 35);
+            this.btnWebViewExtension.TabIndex = 5;
+            this.btnWebViewExtension.Text = "WebView2 Ext";
+            this.btnWebViewExtension.UseVisualStyleBackColor = true;
+            this.btnWebViewExtension.Click += new System.EventHandler(this.btnWebViewExtension_Click);
+            
+            // 
             // txtToken
             // 
             this.txtToken.Font = new System.Drawing.Font("Courier New", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -83,7 +97,7 @@ namespace MSALAuthApp
             this.txtToken.ScrollBars = System.Windows.Forms.ScrollBars.Both;
             this.txtToken.Size = new System.Drawing.Size(756, 347);
             this.txtToken.TabIndex = 4;
-            this.txtToken.Text = "Click Login to authenticate with Azure AD and view the access token here.";
+            this.txtToken.Text = "Click Login to authenticate with Azure AD and view the access token here.\r\n\r\nAfter authentication, use 'WebView2 Ext' to load the extension for API calls.";
             
             // 
             // MainForm
@@ -92,6 +106,7 @@ namespace MSALAuthApp
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(784, 461);
             this.Controls.Add(this.txtToken);
+            this.Controls.Add(this.btnWebViewExtension);
             this.Controls.Add(this.btnClear);
             this.Controls.Add(this.btnLogout);
             this.Controls.Add(this.btnLogin);

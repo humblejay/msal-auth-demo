@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Microsoft.Identity.Client;
@@ -9,6 +11,9 @@ namespace MSALAuthApp
     {
         private IPublicClientApplication _app;
         private string[] _scopes = { "https://graph.microsoft.com/User.Read" };
+        private string _currentAccessToken;
+        private string _currentUserName;
+        private DateTimeOffset _currentTokenExpiry;
         
         // Azure AD app registration details
         private const string ClientId = "b08336ab-2b1a-48ab-b583-c49161fc6055";
@@ -70,7 +75,13 @@ namespace MSALAuthApp
                                    "Token Expires: " + result.ExpiresOn;
                 }
                 
+                // Store token details for WebView2 extension
+                _currentAccessToken = result.AccessToken;
+                _currentUserName = result.Account.Username;
+                _currentTokenExpiry = result.ExpiresOn;
+                
                 if (btnLogout != null) btnLogout.Enabled = true;
+                if (btnWebViewExtension != null) btnWebViewExtension.Enabled = true;
                 MessageBox.Show("Login successful!", "Success", 
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
@@ -119,6 +130,12 @@ namespace MSALAuthApp
 
                 if (txtToken != null) txtToken.Text = "Logged out successfully.";
                 if (btnLogout != null) btnLogout.Enabled = false;
+                if (btnWebViewExtension != null) btnWebViewExtension.Enabled = false;
+                
+                // Clear stored token details
+                _currentAccessToken = null;
+                _currentUserName = null;
+                _currentTokenExpiry = DateTimeOffset.MinValue;
                 
                 MessageBox.Show("Logout successful!", "Success", 
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -135,6 +152,63 @@ namespace MSALAuthApp
             if (txtToken != null)
             {
                 txtToken.Clear();
+            }
+        }
+
+        private void btnWebViewExtension_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(_currentAccessToken))
+                {
+                    MessageBox.Show("No access token available. Please login first.", "Token Required", 
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                // Load the WebView2 extension DLL
+                string extensionPath = Path.Combine(Application.StartupPath, "WebView2Extension.dll");
+                
+                if (!File.Exists(extensionPath))
+                {
+                    MessageBox.Show("WebView2Extension.dll not found. Please ensure the extension is built and available.", 
+                        "Extension Not Found", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                // Load and call the extension
+                Assembly extensionAssembly = Assembly.LoadFrom(extensionPath);
+                Type extensionType = extensionAssembly.GetType("WebView2Extension.WebViewExtension");
+                
+                if (extensionType != null)
+                {
+                    MethodInfo showMethod = extensionType.GetMethod("ShowTokenWebView");
+                    if (showMethod != null)
+                    {
+                        // Call the extension with current token data
+                        showMethod.Invoke(null, new object[] 
+                        {
+                            _currentAccessToken,
+                            _currentUserName ?? "Unknown User",
+                            _currentTokenExpiry.ToString("yyyy-MM-dd HH:mm:ss zzz")
+                        });
+                    }
+                    else
+                    {
+                        MessageBox.Show("ShowTokenWebView method not found in extension.", "Extension Error", 
+                            MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("WebViewExtension class not found in extension.", "Extension Error", 
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error loading WebView2 extension: " + ex.Message, "Extension Error", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
     }
