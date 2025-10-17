@@ -64,7 +64,10 @@ namespace WebView2Extension
                 // Add JavaScript objects to expose token to web content
                 webView2.CoreWebView2.AddWebResourceRequestedFilter("*", Microsoft.Web.WebView2.Core.CoreWebView2WebResourceContext.All);
                 
-                // Inject token into JavaScript global scope
+                // Wait a moment for the page to fully load
+                await Task.Delay(1000);
+                
+                // Inject token into JavaScript global scope with immediate test
                 string jsCode = string.Format(@"
                     window.msalToken = {{
                         accessToken: '{0}',
@@ -72,6 +75,11 @@ namespace WebView2Extension
                         tokenExpiry: '{2}'
                     }};
                     console.log('MSAL Token injected into WebView2:', window.msalToken);
+                    
+                    // Immediately test token after injection
+                    if (typeof testTokenAvailability === 'function') {{
+                        testTokenAvailability();
+                    }}
                 ", 
                     accessToken.Replace("'", "\\'")
                            .Replace("\r", "\\r")
@@ -83,7 +91,7 @@ namespace WebView2Extension
                               .Replace("\r", "\\r")
                               .Replace("\n", "\\n"));
                 
-                await webView2.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(jsCode);
+                await webView2.CoreWebView2.ExecuteScriptAsync(jsCode);
 
             }
             catch (Exception ex)
@@ -214,10 +222,7 @@ namespace WebView2Extension
             html.AppendLine("            }");
             html.AppendLine("        }");
             html.AppendLine("");
-            html.AppendLine("        // Auto-test token availability on load");
-            html.AppendLine("        window.addEventListener('load', () => {");
-            html.AppendLine("            setTimeout(testTokenAvailability, 500);");
-            html.AppendLine("        });");
+            html.AppendLine("        // Token will be injected and tested automatically by C# code");
             html.AppendLine("    </script>");
             html.AppendLine("</body>");
             html.AppendLine("</html>");
