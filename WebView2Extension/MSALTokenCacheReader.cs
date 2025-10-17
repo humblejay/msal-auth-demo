@@ -150,7 +150,7 @@ namespace WebView2Extension
         /// <summary>
         /// Discovers MSAL cache locations and attempts to find tokens
         /// </summary>
-        public async Task<List<string>> DiscoverAvailableCaches()
+        public Task<List<string>> DiscoverAvailableCaches()
         {
             var discoveredCaches = new List<string>();
             
@@ -197,7 +197,7 @@ namespace WebView2Extension
                 System.Diagnostics.Debug.WriteLine($"Error discovering caches: {ex.Message}");
             }
             
-            return discoveredCaches;
+            return Task.FromResult(discoveredCaches);
         }
     }
     
