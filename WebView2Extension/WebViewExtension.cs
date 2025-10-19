@@ -1,6 +1,8 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows.Forms;
+using Microsoft.Identity.Client;
 
 namespace WebView2Extension
 {
@@ -21,41 +23,109 @@ namespace WebView2Extension
         {
             try
             {
-                // Read token from MSAL cache silently with enhanced discovery
-                var cacheReader = new MSALTokenCacheReader(ClientId, Authority);
-                
-                // First, discover available caches
-                var discoveredCaches = await cacheReader.DiscoverAvailableCaches();
-                System.Diagnostics.Debug.WriteLine($"Cache Discovery: Found {discoveredCaches.Count} potential cache locations");
-                
-                var tokenInfo = await cacheReader.GetTokenInfoAsync();
-                
-                if (tokenInfo == null || !tokenInfo.IsValid)
+                void Log(string message)
                 {
-                    var cacheInfo = string.Join("\n", discoveredCaches.Take(5)); // Show first 5
-                    var message = $"No cached token available. Please login in the host application first.\n\n" +
-                                $"Cache Discovery Results:\n{cacheInfo}\n\n" +
-                                $"Found {discoveredCaches.Count} potential cache locations.\n" +
-                                $"Check Debug Output for detailed discovery logs.";
-                    
-                    System.Windows.Forms.MessageBox.Show(
-                        message,
-                        "Token Not Found - Cache Discovery Results",
-                        System.Windows.Forms.MessageBoxButtons.OK,
-                        System.Windows.Forms.MessageBoxIcon.Warning);
+                    try
+                    {
+                        var logPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "webview_extension_debug.log");
+                        var line = DateTimeOffset.Now.ToString("o") + " " + message + Environment.NewLine;
+                        System.IO.File.AppendAllText(logPath, line);
+                    }
+                    catch { /* swallow logging errors */ }
+                }
+
+                Log("ShowTokenWebView invoked.");
+
+                if (string.IsNullOrEmpty(ClientId) || string.IsNullOrEmpty(TenantId))
+                {
+                    MessageBox.Show("Client ID or Tenant ID is not configured for the extension. Please set environment variables ClientId and TenantId or a local secrets.config.",
+                        "Configuration Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    Log("Configuration error: ClientId or TenantId missing.");
                     return;
                 }
 
-                var webViewForm = new TokenWebView(tokenInfo.AccessToken, tokenInfo.UserName, tokenInfo.TokenExpiryString);
+                var authority = !string.IsNullOrEmpty(TenantId) ? "https://login.microsoftonline.com/" + TenantId : Authority;
+
+                // Create an independent in-memory-only PublicClientApplication for the extension
+                var app = PublicClientApplicationBuilder
+                    .Create(ClientId)
+                    .WithAuthority(authority)
+                    .WithRedirectUri("http://localhost")
+                    .Build();
+
+                Log($"Created PCA for clientId={ClientId} authority={authority}");
+
+                string[] scopes = new[] { "https://graph.microsoft.com/User.Read" };
+
+                AuthenticationResult result = null;
+
+                try
+                {
+                    var accounts = await app.GetAccountsAsync();
+                    Log($"GetAccountsAsync returned {accounts?.Count() ?? 0} accounts");
+                    var account = accounts.FirstOrDefault();
+                    if (account != null)
+                    {
+                        try
+                        {
+                            result = await app.AcquireTokenSilent(scopes, account).ExecuteAsync();
+                            Log($"AcquireTokenSilent succeeded for account={account.Username}");
+                        }
+                        catch (MsalUiRequiredException)
+                        {
+                            // Silent failed, will fall back to interactive
+                            Log("AcquireTokenSilent threw MsalUiRequiredException; interactive required.");
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log("Error while attempting silent token acquisition: " + ex.ToString());
+                }
+
+                if (result == null)
+                {
+                    Log("Attempting AcquireTokenInteractive (system browser)");
+                    try
+                    {
+                        result = await app
+                            .AcquireTokenInteractive(scopes)
+                            // Avoid forcing account selection so system browser SSO (cookies) can be reused
+                            //.WithPrompt(Prompt.SelectAccount)
+                            .WithUseEmbeddedWebView(false)
+                            .ExecuteAsync();
+                        Log($"AcquireTokenInteractive succeeded for account={result?.Account?.Username}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Log("AcquireTokenInteractive failed: " + ex.ToString());
+                        throw;
+                    }
+                }
+
+                if (result == null)
+                {
+                    Log("Result is null after token acquisition attempts.");
+                    MessageBox.Show("Unable to retrieve token in extension.", "Token Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                Log("Token acquired, showing WebView form.");
+
+                var webViewForm = new TokenWebView(result.AccessToken, result.Account.Username, result.ExpiresOn.ToString());
                 webViewForm.Show();
+            }
+            catch (MsalException msalEx)
+            {
+                MessageBox.Show("MSAL error in extension: " + msalEx.Message, "MSAL Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             catch (Exception ex)
             {
-                System.Windows.Forms.MessageBox.Show(
+                MessageBox.Show(
                     "Error loading WebView2 extension: " + ex.Message,
                     "WebView2 Extension Error",
-                    System.Windows.Forms.MessageBoxButtons.OK,
-                    System.Windows.Forms.MessageBoxIcon.Error);
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
             }
         }
 
