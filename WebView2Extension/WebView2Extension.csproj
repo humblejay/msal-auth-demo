@@ -50,6 +50,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="MSALTokenCacheReader.cs" />
+    <Compile Include="ConfigHelper.cs" />
     <Compile Include="TokenWebView.cs">
       <SubType>Form</SubType>
     </Compile>

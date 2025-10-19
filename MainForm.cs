@@ -15,9 +15,9 @@ namespace MSALAuthApp
         private string _currentUserName;
         private DateTimeOffset _currentTokenExpiry;
         
-        // Azure AD app registration details
-        private const string ClientId = "b08336ab-2b1a-48ab-b583-c49161fc6055";
-        private const string TenantId = "bd80183f-c644-44a3-aa23-fd0979b821db";
+    // Azure AD app registration details (loaded from environment or secrets.config)
+    private readonly string ClientId = ConfigHelper.GetClientId();
+    private readonly string TenantId = ConfigHelper.GetTenantId();
 
         public MainForm()
         {
@@ -31,14 +31,15 @@ namespace MSALAuthApp
             {
                 if (string.IsNullOrEmpty(ClientId) || string.IsNullOrEmpty(TenantId))
                 {
-                    MessageBox.Show("Client ID or Tenant ID is not configured. Please check the configuration.", "Configuration Error", 
+                    MessageBox.Show("Client ID or Tenant ID is not configured. Please create a local 'secrets.config' or set environment variables ClientId and TenantId.", "Configuration Error", 
                         MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
-                
+
+                var authority = "https://login.microsoftonline.com/" + TenantId;
                 _app = PublicClientApplicationBuilder
                     .Create(ClientId)
-                    .WithAuthority("https://login.microsoftonline.com/" + TenantId)
+                    .WithAuthority(authority)
                     .WithRedirectUri("http://localhost") // This will use system browser
                     .WithCacheOptions(CacheOptions.EnableSharedCacheOptions)
                     .Build();

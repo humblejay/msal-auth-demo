@@ -340,3 +340,9 @@ FodyWeavers.xsd
 
 # Exclude NuGet executable (downloaded manually)
 nuget.exe
+
+# Local secrets and env files
+secrets.config
+secrets.config.*
+appsettings.local.json
+*.local.env

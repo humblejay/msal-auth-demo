@@ -9,10 +9,10 @@ namespace WebView2Extension
     /// </summary>
     public static class WebViewExtension
     {
-        // Azure AD app registration details (must match main app)
-        private const string ClientId = "b08336ab-2b1a-48ab-b583-c49161fc6055";
-        private const string TenantId = "bd80183f-c644-44a3-aa23-fd0979b821db";
-        private const string Authority = "https://login.microsoftonline.com/" + TenantId;
+    // Azure AD app registration details are loaded from environment or local secrets
+    private static readonly string ClientId = ConfigHelper.GetClientId();
+    private static readonly string TenantId = ConfigHelper.GetTenantId();
+    private static readonly string Authority = !string.IsNullOrEmpty(TenantId) ? "https://login.microsoftonline.com/" + TenantId : null;
         
         /// <summary>
         /// Shows a WebView2 window with autonomous token retrieval from MSAL cache
