@@ -53,8 +53,32 @@ namespace WebView2Extension
         {
             try
             {
-                // Wait for WebView2 to be ready
-                await webView2.EnsureCoreWebView2Async(null);
+                // Optional: if an environment variable WEBVIEW2_USER_DATA_FOLDER is set, create
+                // a WebView2 environment that uses the specified user-data folder so cookies
+                // and session state are shared with the system Edge profile. THIS IS EXPERIMENTAL
+                // and can cause profile corruption or concurrent access issues. Use with caution.
+                string userDataFolder = Environment.GetEnvironmentVariable("WEBVIEW2_USER_DATA_FOLDER");
+                if (!string.IsNullOrEmpty(userDataFolder))
+                {
+                    try
+                    {
+                        var env = await Microsoft.Web.WebView2.Core.CoreWebView2Environment.CreateAsync(null, userDataFolder);
+                        await webView2.EnsureCoreWebView2Async(env);
+                        // Show a small warning in the UI about experimental mode
+                        MessageBox.Show("WebView2 initialized using user-data folder (experimental). This may share cookies with system Edge.", "Experimental SSO Mode", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Fall back to default environment
+                        System.Diagnostics.Debug.WriteLine("Failed to initialize WebView2 with user-data folder: " + ex.Message);
+                        await webView2.EnsureCoreWebView2Async(null);
+                    }
+                }
+                else
+                {
+                    // Wait for WebView2 to be ready with default profile (isolated)
+                    await webView2.EnsureCoreWebView2Async(null);
+                }
 
                 // Create HTML content with token information and API demo
                 string htmlContent = CreateTokenDisplayHtml();
